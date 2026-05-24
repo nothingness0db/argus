@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 using System.Threading;
 
 namespace HotspotManager.Services
@@ -34,6 +35,8 @@ namespace HotspotManager.Services
 
         public static ObservableCollection<LogEntry> Entries => _entries;
 
+        private static readonly Encoding _utf8Bom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+
         public static void Init()
         {
             if (_initialized) return;
@@ -44,7 +47,9 @@ namespace HotspotManager.Services
                 var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
                 Directory.CreateDirectory(dir);
                 _logFilePath = Path.Combine(dir, $"hotspot_{DateTime.Now:yyyyMMdd}.log");
-                File.AppendAllText(_logFilePath, $"=== HotspotManager Log Started {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===" + Environment.NewLine);
+                if (!File.Exists(_logFilePath))
+                    File.WriteAllText(_logFilePath, "", _utf8Bom);
+                File.AppendAllText(_logFilePath, $"=== HotspotManager Log Started {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===" + Environment.NewLine, _utf8Bom);
             }
             catch { }
 
@@ -83,7 +88,7 @@ namespace HotspotManager.Services
             {
                 try
                 {
-                    File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                    File.AppendAllText(_logFilePath, line + Environment.NewLine, _utf8Bom);
                 }
                 catch { }
             }
