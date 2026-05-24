@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>annotations</Nullable>
+    <AssemblyName>HotspotManager</AssemblyName>
+    <RootNamespace>HotspotManager</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <None Update="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\WinDivert.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\WinDivert64.sys" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

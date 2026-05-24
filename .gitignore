@@ -1,0 +1,43 @@
+# Build output
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userprefs
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.swp
+
+# Logs
+logs/
+*.log
+
+# Local secrets / artifacts
+*.pfx
+*.snk
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Tool / agent state
+.opencode/
+.claude/
+skills-lock.json
+
+# Native binaries that must be supplied by the user
+Assets/WinDivert.dll
+Assets/WinDivert64.sys
+
+# Icon build intermediate
+Assets/logo-src.png

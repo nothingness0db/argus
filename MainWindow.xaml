@@ -1,0 +1,319 @@
+<Window x:Class="HotspotManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:HotspotManager.ViewModels"
+        xmlns:svc="clr-namespace:HotspotManager.Services"
+        Title="{Binding L[App.Title]}" Height="680" Width="920"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        ShowInTaskbar="True"
+        Icon="Assets/app.ico"
+        Background="#F7F6F3" Foreground="#111111"
+        FontFamily="Segoe UI">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" MinHeight="120"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Header -->
+        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1"
+                CornerRadius="8" Padding="20" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding L[App.Title]}" FontSize="20" FontWeight="SemiBold" Foreground="#111111"/>
+                    <TextBlock Text="{Binding StatusText}" FontSize="13" Foreground="#787774" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="{Binding LangButtonText}"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding ToggleLangCommand}"
+                        FontSize="11" Margin="0,0,8,0"/>
+                <Button Grid.Column="2" Content="{Binding ToggleButtonText}"
+                        Width="152" Height="40" FontSize="13">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsHotspotOn}" Value="True">
+                                    <Setter Property="Background" Value="#9F2F2D"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsHotspotOn}" Value="False">
+                                    <Setter Property="Background" Value="#111111"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Row 1: Configuration -->
+        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1"
+                CornerRadius="8" Padding="20" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="{Binding L[Config.Section]}" FontSize="12" FontWeight="Bold"
+                           Foreground="#787774" Margin="0,0,0,12"
+                           TextOptions.TextFormattingMode="Display"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,10">
+                        <TextBlock Text="{Binding L[Config.Ssid]}" Foreground="#111111" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Ssid, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MinimalTextBox}" FontSize="14"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,10">
+                        <TextBlock Text="{Binding L[Config.Password]}" Foreground="#111111" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Passphrase, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MinimalTextBox}" FontSize="14"/>
+                    </StackPanel>
+                    <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
+                            Content="{Binding L[Config.Apply]}" Command="{Binding ApplyConfigCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            Width="88" Height="60" FontSize="13"
+                            Background="#EDF3EC" Foreground="#346538"/>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding L[Config.Band]}" Foreground="#111111" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <ComboBox SelectedIndex="{Binding SelectedBandIndex}" FontSize="13">
+                            <ComboBoxItem Content="{Binding L[Config.BandAuto]}"/>
+                            <ComboBoxItem Content="{Binding L[Config.Band2G]}"/>
+                            <ComboBoxItem Content="{Binding L[Config.Band5G]}"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,6,0,0">
+                        <CheckBox IsChecked="{Binding IsHidden}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding L[Config.Hidden]}" Foreground="#787774" FontSize="13" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Row 2: Device List -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1"
+                CornerRadius="8" Padding="20" Margin="0,0,0,16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding L[Devices.Section]}" FontSize="13" FontWeight="SemiBold" Foreground="#111111"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="{Binding SleepGuardButtonText}"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ToggleSleepGuardCommand}"
+                                FontSize="11" Margin="0,0,8,0"/>
+                        <Button Content="{Binding L[Btn.Filter]}"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ToggleFilterCommand}"
+                                FontSize="11"/>
+                    </StackPanel>
+                </Grid>
+                <Border Grid.Row="1" Background="#F7F6F3" BorderBrush="#EAEAEA" BorderThickness="0,0,0,1" Height="30">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="90"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding L[Devices.Hostname]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding L[Devices.Mac]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        <TextBlock Grid.Column="2" Text="{Binding L[Devices.Ip]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        <TextBlock Grid.Column="3" Text="{Binding L[Devices.Limit]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        <TextBlock Grid.Column="4" Text="{Binding L[Devices.Status]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0"/>
+                        <TextBlock Grid.Column="5" Text="{Binding L[Devices.Action]}" Foreground="#787774" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Grid>
+                </Border>
+                <ListBox x:Name="DeviceListBox" Grid.Row="2"
+                         ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                         Background="Transparent" BorderThickness="0" Margin="0,2,0,0">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="0,1">
+                                            <ContentPresenter/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#F7F6F3"/></Trigger>
+                                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#FBFBFA"/></Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170"/><ColumnDefinition Width="150"/><ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding HostName, TargetNullValue='---'}" Foreground="#111111" FontSize="12" VerticalAlignment="Center" Margin="10,0" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MacAddress}" Foreground="#787774" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="10,0"/>
+                                <TextBlock Grid.Column="2" Text="{Binding IpAddress, TargetNullValue='...'}" Foreground="#787774" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="10,0"/>
+                                <TextBox Grid.Column="3" Text="{Binding SpeedLimitKbps, StringFormat={}{0:F0}}"
+                                         Background="#F7F6F3" Foreground="#111111" BorderBrush="#EAEAEA" BorderThickness="1"
+                                         FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="4,0" Height="26" Padding="6,3"/>
+                                <Border Grid.Column="4" VerticalAlignment="Center" Margin="10,0" HorizontalAlignment="Left" Padding="8,3" CornerRadius="9999">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#EDF3EC"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBlacklisted}" Value="True">
+                                                    <Setter Property="Background" Value="#FDEBEC"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="10" FontWeight="Bold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding DataContext.L[Devices.Active], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                <Setter Property="Foreground" Value="#346538"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsBlacklisted}" Value="True">
+                                                        <Setter Property="Text" Value="{Binding DataContext.L[Devices.Blocked], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                        <Setter Property="Foreground" Value="#9F2F2D"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <Button Grid.Column="5" HorizontalAlignment="Center"
+                                        Command="{Binding DataContext.BlacklistDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
+                                            <Setter Property="Content" Value="{Binding DataContext.L[Devices.Block], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <Setter Property="FontSize" Value="10"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBlacklisted}" Value="True">
+                                                    <Setter Property="Content" Value="{Binding DataContext.L[Devices.Unblock], RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                    <Setter Property="Background" Value="#EDF3EC"/>
+                                                    <Setter Property="Foreground" Value="#346538"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Grid.Row="3" Text="{Binding L[Devices.Hint]}" Foreground="#A0A0A0" FontSize="11" Margin="0,8,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Row 3: Bottom Bar -->
+        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#EAEAEA" BorderThickness="1"
+                CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                    <TextBlock Text="{Binding L[Bar.SleepGuard]}" Foreground="#787774" FontSize="11" VerticalAlignment="Center"/>
+                    <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="9999" Background="{Binding SleepGuardBadgeBg}">
+                        <TextBlock Text="{Binding SleepGuardBadgeText}" FontSize="10" FontWeight="Bold" Foreground="{Binding SleepGuardBadgeColor}"/>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="{Binding L[Bar.Filter]}" Foreground="#787774" FontSize="11" VerticalAlignment="Center"/>
+                    <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="9999">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                                <Style.Triggers><DataTrigger Binding="{Binding IsFilterActive}" Value="True"><Setter Property="Background" Value="#EDF3EC"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock FontSize="10" FontWeight="Bold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding L[Bar.STOPPED]}"/>
+                                    <Setter Property="Foreground" Value="#787774"/>
+                                    <Style.Triggers><DataTrigger Binding="{Binding IsFilterActive}" Value="True"><Setter Property="Text" Value="{Binding L[Bar.RUNNING]}"/><Setter Property="Foreground" Value="#346538"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <Button Content="{Binding LogButtonText}" Style="{StaticResource GhostButton}" Command="{Binding ToggleLogCommand}" FontSize="11" Margin="0,0,8,0"/>
+                    <Button Content="{Binding L[Btn.ClearLog]}" Style="{StaticResource GhostButton}" Command="{Binding ClearLogCommand}" FontSize="11"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Row 4: Log Panel -->
+        <Border Grid.Row="4" Background="#F9F9F9" BorderBrush="#EAEAEA" BorderThickness="1"
+                CornerRadius="8" Padding="12,8" Margin="0,0,0,0"
+                Visibility="{Binding IsLogVisible, Converter={StaticResource BoolToVisibility}}" Height="170">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="{Binding L[Log.Title]}" FontSize="10" FontWeight="Bold" Foreground="#A0A0A0" Margin="2,0,0,6"/>
+                <ListBox x:Name="LogListBox" Grid.Row="1" ItemsSource="{Binding LogEntries}" Background="Transparent" BorderThickness="0" FontFamily="Consolas" FontSize="10">
+                    <ListBox.Template>
+                        <ControlTemplate TargetType="ListBox">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                <ScrollViewer x:Name="LogScrollViewer" CanContentScroll="False" VerticalScrollBarVisibility="Auto">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem"><Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="0"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type svc:LogEntry}">
+                            <TextBlock Text="{Binding DisplayText}" FontFamily="Consolas" FontSize="10" Margin="0,0,0,1">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static svc:LogLevel.Error}"><Setter Property="Foreground" Value="#9F2F2D"/></DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static svc:LogLevel.Warn}"><Setter Property="Foreground" Value="#956400"/></DataTrigger>
+                                            <DataTrigger Binding="{Binding Level}" Value="{x:Static svc:LogLevel.Info}"><Setter Property="Foreground" Value="#787774"/></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
