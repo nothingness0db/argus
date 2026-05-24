@@ -41,3 +41,7 @@ Assets/WinDivert64.sys
 
 # Icon build intermediate
 Assets/logo-src.png
+
+# Screenshot tool output (PixPin) and manual release zips
+PixPin_*.png
+HotspotManager-v*.zip
