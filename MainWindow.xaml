@@ -38,11 +38,11 @@
                     <TextBlock Text="{Binding L[App.Title]}" FontSize="20" FontWeight="SemiBold" Foreground="#111111"/>
                     <TextBlock Text="{Binding StatusText}" FontSize="13" Foreground="#787774" Margin="0,4,0,0"/>
                 </StackPanel>
-                <Button Grid.Column="1" Content="重置系统热点"
+                <Button Grid.Column="1" Content="{Binding L[Btn.ResetSys]}"
                         Style="{StaticResource SecondaryButton}"
                         Command="{Binding ResetSystemHotspotCommand}"
                         FontSize="11" Margin="0,0,8,0"
-                        ToolTip="清除 Windows 当前热点状态: 停止 hostednetwork, 重启 ICS 服务, 重新初始化"/>
+                        ToolTip="{Binding L[Btn.ResetSysTip]}"/>
                 <Button Grid.Column="2" Content="{Binding LangButtonText}"
                         Style="{StaticResource SecondaryButton}"
                         Command="{Binding ToggleLangCommand}"

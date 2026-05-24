@@ -24,20 +24,20 @@ namespace HotspotManager.Native
         {
             try
             {
-                Logger.Info("Hotspot", "正在获取网络连接配置...");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.GetProfile");
 
                 _profile = NetworkInformation.GetInternetConnectionProfile();
                 if (_profile == null)
                 {
-                    Logger.Info("Hotspot", "未找到互联网连接，尝试查找有网络访问的配置...");
+                    Logger.TrInfo("Hotspot", "LogMsg.Hot.NoInternet");
                     var allProfiles = NetworkInformation.GetConnectionProfiles();
-                    Logger.Info("Hotspot", $"找到 {allProfiles.Count} 个网络配置");
+                    Logger.TrInfo("Hotspot", "LogMsg.Hot.ProfilesFound", allProfiles.Count);
 
                     foreach (var p in allProfiles)
                     {
                         var level = p.GetNetworkConnectivityLevel();
                         var name = p.ProfileName;
-                        Logger.Info("Hotspot", $"  - {name}: 连接级别={level}");
+                        Logger.TrInfo("Hotspot", "LogMsg.Hot.ProfileItem", name, level);
                     }
 
                     _profile = allProfiles
@@ -46,19 +46,19 @@ namespace HotspotManager.Native
 
                 if (_profile == null)
                 {
-                    Logger.Error("Hotspot", "未找到任何有互联网访问的网络连接，无法创建热点");
+                    Logger.TrError("Hotspot", "LogMsg.Hot.NoUsableProfile");
                     return false;
                 }
 
-                Logger.Info("Hotspot", $"找到网络: {_profile.ProfileName}, 级别={_profile.GetNetworkConnectivityLevel()}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.FoundNet", _profile.ProfileName, _profile.GetNetworkConnectivityLevel());
 
                 _manager = NetworkOperatorTetheringManager.CreateFromConnectionProfile(_profile);
-                Logger.Info("Hotspot", $"TetheringManager 创建成功, 当前状态={_manager.TetheringOperationalState}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.MgrCreated", _manager.TetheringOperationalState);
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.Error("Hotspot", "初始化失败", ex);
+                Logger.TrError("Hotspot", "LogMsg.Hot.InitFail", ex);
                 return false;
             }
         }
@@ -67,28 +67,29 @@ namespace HotspotManager.Native
         {
             if (_manager == null)
             {
-                Logger.Warn("Hotspot", "启动失败: TetheringManager 未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.NoMgrStart");
                 return false;
             }
             try
             {
                 if (_manager.TetheringOperationalState == TetheringOperationalState.On)
                 {
-                    Logger.Info("Hotspot", "热点已在运行中");
+                    Logger.TrInfo("Hotspot", "LogMsg.Hot.AlreadyOn");
                     return true;
                 }
 
-                Logger.Info("Hotspot", "正在开启热点...");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.Starting");
                 var opResult = await _manager.StartTetheringAsync();
                 LastStartStatus = opResult.Status;
-                Logger.Info("Hotspot", $"StartTetheringAsync 返回: Status={opResult.Status}, AdditionalErrorMessage={opResult.AdditionalErrorMessage ?? "(none)"}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.StartResult", opResult.Status, opResult.AdditionalErrorMessage ?? "(none)");
                 var success = _manager.TetheringOperationalState == TetheringOperationalState.On;
-                Logger.Info("Hotspot", success ? "热点已成功开启" : $"热点开启后状态异常: 当前状态={_manager.TetheringOperationalState}");
+                if (success) Logger.TrInfo("Hotspot", "LogMsg.Hot.StartOk");
+                else Logger.TrInfo("Hotspot", "LogMsg.Hot.StartBadState", _manager.TetheringOperationalState);
                 return success;
             }
             catch (Exception ex)
             {
-                Logger.Error("Hotspot", "开启热点失败", ex);
+                Logger.TrError("Hotspot", "LogMsg.Hot.StartEx", ex);
                 return false;
             }
         }
@@ -97,27 +98,28 @@ namespace HotspotManager.Native
         {
             if (_manager == null)
             {
-                Logger.Warn("Hotspot", "停止失败: TetheringManager 未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.NoMgrStop");
                 return false;
             }
             try
             {
                 if (_manager.TetheringOperationalState == TetheringOperationalState.Off)
                 {
-                    Logger.Info("Hotspot", "热点已处于关闭状态");
+                    Logger.TrInfo("Hotspot", "LogMsg.Hot.AlreadyOff");
                     return true;
                 }
 
-                Logger.Info("Hotspot", "正在关闭热点...");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.Stopping");
                 var opResult = await _manager.StopTetheringAsync();
-                Logger.Info("Hotspot", $"StopTetheringAsync 返回: Status={opResult.Status}, AdditionalErrorMessage={opResult.AdditionalErrorMessage ?? "(none)"}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.StopResult", opResult.Status, opResult.AdditionalErrorMessage ?? "(none)");
                 var success = _manager.TetheringOperationalState == TetheringOperationalState.Off;
-                Logger.Info("Hotspot", success ? "热点已成功关闭" : $"热点关闭后状态异常: 当前状态={_manager.TetheringOperationalState}");
+                if (success) Logger.TrInfo("Hotspot", "LogMsg.Hot.StopOk");
+                else Logger.TrInfo("Hotspot", "LogMsg.Hot.StopBadState", _manager.TetheringOperationalState);
                 return success;
             }
             catch (Exception ex)
             {
-                Logger.Error("Hotspot", "关闭热点失败", ex);
+                Logger.TrError("Hotspot", "LogMsg.Hot.StopEx", ex);
                 return false;
             }
         }
@@ -126,12 +128,12 @@ namespace HotspotManager.Native
         {
             if (_manager == null)
             {
-                Logger.Warn("Hotspot", "配置失败: TetheringManager 未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgNoMgr");
                 return false;
             }
             try
             {
-                Logger.Info("Hotspot", $"正在配置热点: SSID={ssid}, Band={band}, Hidden={isHidden}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.CfgConfiguring", ssid, band, isHidden);
                 var config = _manager.GetCurrentAccessPointConfiguration();
                 config.Ssid = ssid;
                 config.Passphrase = passphrase;
@@ -142,37 +144,37 @@ namespace HotspotManager.Native
                     if (bandProp != null)
                     {
                         bandProp.SetValue(config, band);
-                        Logger.Info("Hotspot", $"频段已设置为: {band}");
+                        Logger.TrInfo("Hotspot", "LogMsg.Hot.CfgBandSet", band);
                     }
                     else
                     {
-                        Logger.Warn("Hotspot", "Band 属性不可用, 该版本 SDK 可能不支持频段选择");
+                        Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgBandUnavailable");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Hotspot", $"Band 设置失败 (该功能可能不被当前系统支持)", ex);
+                    Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgBandSetFail", ex);
                 }
 
                 await _manager.ConfigureAccessPointAsync(config);
-                Logger.Info("Hotspot", "热点配置已应用");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.CfgApplied");
 
                 try
                 {
                     var verify = _manager.GetCurrentAccessPointConfiguration();
                     var verifyBandProp = verify.GetType().GetProperty("Band");
                     var actualBand = verifyBandProp != null ? verifyBandProp.GetValue(verify) : null;
-                    Logger.Info("Hotspot", $"读回配置: SSID={verify.Ssid}, Band={actualBand ?? "N/A"} (请求={band})");
+                    Logger.TrInfo("Hotspot", "LogMsg.Hot.CfgReadBack", verify.Ssid, actualBand ?? "N/A", band);
                     if (actualBand != null && (int)actualBand != band)
-                        Logger.Warn("Hotspot", $"频段被系统调整: 请求={band}, 实际={actualBand} (适配器可能不支持该频段)");
+                        Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgBandMismatch", band, actualBand);
                 }
-                catch (Exception ex) { Logger.Warn("Hotspot", "读回配置失败", ex); }
+                catch (Exception ex) { Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgReadBackFail", ex); }
 
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.Error("Hotspot", "配置热点失败", ex);
+                Logger.TrError("Hotspot", "LogMsg.Hot.CfgEx", ex);
                 return false;
             }
         }
@@ -196,11 +198,11 @@ namespace HotspotManager.Native
                 }
                 catch { }
 
-                Logger.Info("Hotspot", $"Read system config: SSID=\"{cfg.Ssid}\", Band={cfg.Band}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.ReadCfg", cfg.Ssid, cfg.Band);
             }
             catch (Exception ex)
             {
-                Logger.Warn("Hotspot", "Failed to read system hotspot config", ex);
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.ReadCfgFail", ex);
             }
 
             return cfg;
@@ -229,7 +231,7 @@ namespace HotspotManager.Native
             }
             catch (Exception ex)
             {
-                Logger.Warn("Hotspot", $"获取连接客户端列表失败", ex);
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.GetClientsFail", ex);
             }
 
             return result;
@@ -249,7 +251,7 @@ namespace HotspotManager.Native
 
         public void Dispose()
         {
-            Logger.Info("Hotspot", "Native 资源已释放");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.NativeDisposed");
             _manager = null;
             _profile = null;
         }

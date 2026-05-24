@@ -35,17 +35,17 @@ namespace HotspotManager.Services
 
         public async Task<bool> InitializeAsync()
         {
-            Logger.Info("Hotspot", "HotspotService 正在初始化...");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.SvcInit");
             IsInitialized = await _native.InitializeAsync();
             if (IsInitialized)
             {
                 IsRunning = _native.CurrentState ==
                     Windows.Networking.NetworkOperators.TetheringOperationalState.On;
-                Logger.Info("Hotspot", $"HotspotService 初始化成功, 当前状态={(IsRunning ? "运行中" : "已关闭")}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.SvcInitOk", IsRunning ? "On" : "Off");
             }
             else
             {
-                Logger.Error("Hotspot", "HotspotService 初始化失败");
+                Logger.TrError("Hotspot", "LogMsg.Hot.SvcInitFail");
             }
             return IsInitialized;
         }
@@ -54,31 +54,31 @@ namespace HotspotManager.Services
         {
             if (!IsInitialized)
             {
-                Logger.Warn("Hotspot", "无法开启: 服务未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.NotInit", "start");
                 return false;
             }
-            Logger.Info("Hotspot", "请求开启热点");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.StartReq");
             var result = await _native.StartTetheringAsync();
             if (result) { IsRunning = true; return true; }
 
             var currentCfg = _native.GetCurrentConfig();
             if (currentCfg.Band != 0)
             {
-                Logger.Warn("Hotspot", $"开启失败 (Status={_native.LastStartStatus}), 当前频段={currentCfg.Band}, 自动回退到 Auto(0) 重试");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.Fallback", _native.LastStartStatus, currentCfg.Band);
                 var reconfigured = await _native.ConfigureAsync(currentCfg.Ssid, currentCfg.Passphrase, 0, currentCfg.IsHidden);
                 if (reconfigured)
                 {
                     var retry = await _native.StartTetheringAsync();
                     if (retry)
                     {
-                        Logger.Info("Hotspot", "回退到 Auto 频段后开启成功");
+                        Logger.TrInfo("Hotspot", "LogMsg.Hot.FallbackOk");
                         _config.Band = 0;
                         IsRunning = true;
                         return true;
                     }
-                    Logger.Error("Hotspot", $"回退后仍失败 (Status={_native.LastStartStatus}) — 适配器可能不支持 AP 模式或被占用");
+                    Logger.TrError("Hotspot", "LogMsg.Hot.FallbackFail", _native.LastStartStatus);
                 }
-                else Logger.Error("Hotspot", "回退配置写入失败");
+                else Logger.TrError("Hotspot", "LogMsg.Hot.FallbackCfgFail");
             }
             return false;
         }
@@ -87,10 +87,10 @@ namespace HotspotManager.Services
         {
             if (!IsInitialized)
             {
-                Logger.Warn("Hotspot", "无法关闭: 服务未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.NotInit", "stop");
                 return false;
             }
-            Logger.Info("Hotspot", "请求关闭热点");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.StopReq");
             var result = await _native.StopTetheringAsync();
             if (result) IsRunning = false;
             return result;
@@ -105,12 +105,12 @@ namespace HotspotManager.Services
         {
             if (!IsInitialized)
             {
-                Logger.Warn("Hotspot", "无法应用配置: 服务未初始化");
+                Logger.TrWarn("Hotspot", "LogMsg.Hot.CfgFailNotInit");
                 return false;
             }
             var wasRunning = IsRunning;
 
-            Logger.Info("Hotspot", $"应用配置: SSID={config.Ssid}, Band={config.Band}, Hidden={config.IsHidden}");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.CfgApply", config.Ssid, config.Band, config.IsHidden);
             if (wasRunning) await StopAsync();
 
             var result = await _native.ConfigureAsync(
@@ -127,7 +127,7 @@ namespace HotspotManager.Services
 
         public async Task<bool> ResetSystemHotspotAsync()
         {
-            Logger.Info("Hotspot", "=== 开始重置系统热点 ===");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.ResetStart");
             try
             {
                 if (IsRunning) await StopAsync();
@@ -150,12 +150,12 @@ namespace HotspotManager.Services
                     IsRunning = _native.CurrentState ==
                         Windows.Networking.NetworkOperators.TetheringOperationalState.On;
                 }
-                Logger.Info("Hotspot", $"=== 重置完成, 初始化={(IsInitialized ? "成功" : "失败")} ===");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.ResetDone", IsInitialized ? "OK" : "FAIL");
                 return IsInitialized;
             }
             catch (Exception ex)
             {
-                Logger.Error("Hotspot", "重置系统热点失败", ex);
+                Logger.TrError("Hotspot", "LogMsg.Hot.ResetFail", ex);
                 return false;
             }
         }
@@ -172,12 +172,12 @@ namespace HotspotManager.Services
             try
             {
                 using var p = Process.Start(psi);
-                if (p == null) { Logger.Warn("Hotspot", $"$ {file} {args} → 进程启动失败"); return; }
+                if (p == null) { Logger.TrWarn("Hotspot", "LogMsg.Hot.CmdLaunchFail", file, args); return; }
                 p.WaitForExit(8000);
                 var output = (p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd()).Trim();
-                Logger.Info("Hotspot", $"$ {file} {args} → exit={p.ExitCode} {(output.Length > 0 ? "| " + output : "")}");
+                Logger.TrInfo("Hotspot", "LogMsg.Hot.CmdResult", file, args, p.ExitCode, output.Length > 0 ? "| " + output : "");
             }
-            catch (Exception ex) { Logger.Warn("Hotspot", $"$ {file} {args} 失败", ex); }
+            catch (Exception ex) { Logger.TrWarn("Hotspot", "LogMsg.Hot.CmdEx", ex, file, args); }
         }
 
         public IReadOnlyList<ConnectedDevice> GetConnectedClients()
@@ -187,7 +187,7 @@ namespace HotspotManager.Services
 
         public void Dispose()
         {
-            Logger.Info("Hotspot", "HotspotService 已释放");
+            Logger.TrInfo("Hotspot", "LogMsg.Hot.Disposed");
             _native.Dispose();
         }
     }

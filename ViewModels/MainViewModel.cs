@@ -34,7 +34,7 @@ namespace HotspotManager.ViewModels
         {
             Logger.Init();
             _statusText = LocaleService.Get("App.Init");
-            Logger.Info("App", LocaleService.Get("App.Started"));
+            Logger.TrInfo("App", "LogMsg.App.Started");
 
             _hotspotService = new HotspotService();
             _deviceMonitor = new DeviceMonitorService(_hotspotService);
@@ -79,7 +79,7 @@ namespace HotspotManager.ViewModels
 
         public async Task InitializeAsync()
         {
-            Logger.Info("App", LocaleService.Get("App.InitStart"));
+            Logger.TrInfo("App", "LogMsg.App.InitStart");
             var initialized = await _hotspotService.InitializeAsync();
             if (initialized)
             {
@@ -96,12 +96,12 @@ namespace HotspotManager.ViewModels
 
                 _deviceMonitor.StartMonitoring();
                 UpdateStatus();
-                Logger.Info("App", LocaleService.Get("App.InitDone"));
+                Logger.TrInfo("App", "LogMsg.App.InitDone");
             }
             else
             {
                 StatusText = LocaleService.Get("App.InitFail");
-                Logger.Error("App", "Init failed - check Hotspot log for details");
+                Logger.TrError("App", "LogMsg.App.InitFail");
             }
         }
 
@@ -173,7 +173,7 @@ namespace HotspotManager.ViewModels
 
         private async Task StartHotspot()
         {
-            Logger.Info("UI", "Start hotspot requested");
+            Logger.TrInfo("UI", "LogMsg.UI.StartReq");
             StatusText = LocaleService.Get("Status.Starting");
             var r = await _hotspotService.StartAsync();
             StatusText = r ? LocaleService.Get("Status.Started") : LocaleService.Get("Status.StartFail");
@@ -181,7 +181,7 @@ namespace HotspotManager.ViewModels
 
         private async Task StopHotspot()
         {
-            Logger.Info("UI", "Stop hotspot requested");
+            Logger.TrInfo("UI", "LogMsg.UI.StopReq");
             StatusText = LocaleService.Get("Status.Stopping");
             var r = await _hotspotService.StopAsync();
             StatusText = r ? LocaleService.Get("Status.Stopped") : LocaleService.Get("Status.StopFail");
@@ -191,10 +191,10 @@ namespace HotspotManager.ViewModels
 
         private async Task ResetSystemHotspot()
         {
-            Logger.Info("UI", "Reset system hotspot requested");
-            StatusText = "正在重置系统热点配置...";
+            Logger.TrInfo("UI", "LogMsg.UI.ResetReq");
+            StatusText = LocaleService.Get("Status.Resetting");
             var r = await _hotspotService.ResetSystemHotspotAsync();
-            StatusText = r ? "系统热点已重置, 可以重试开启" : "重置失败, 请查看日志";
+            StatusText = LocaleService.Get(r ? "Status.ResetOk" : "Status.ResetFail");
         }
 
         private async Task ApplyConfig()
@@ -248,7 +248,7 @@ namespace HotspotManager.ViewModels
 
         public void Dispose()
         {
-            Logger.Info("App", LocaleService.Get("App.Shutdown"));
+            Logger.TrInfo("App", "LogMsg.App.Shutdown");
             _trafficFilter.Dispose(); _deviceMonitor.Dispose(); _sleepGuard.Dispose(); _hotspotService.Dispose();
         }
     }

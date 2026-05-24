@@ -65,6 +65,17 @@ namespace HotspotManager.Services
         public static void Error(string source, string message, Exception ex) =>
             Log(LogLevel.Error, source, $"{message}: {ex.GetType().Name} - {ex.Message}");
 
+        public static void TrInfo(string source, string key, params object[] args) =>
+            Log(LogLevel.Info, source, LocaleService.Format(key, args));
+        public static void TrWarn(string source, string key, params object[] args) =>
+            Log(LogLevel.Warn, source, LocaleService.Format(key, args));
+        public static void TrWarn(string source, string key, Exception ex, params object[] args) =>
+            Log(LogLevel.Warn, source, $"{LocaleService.Format(key, args)}: {ex.GetType().Name} - {ex.Message}");
+        public static void TrError(string source, string key, params object[] args) =>
+            Log(LogLevel.Error, source, LocaleService.Format(key, args));
+        public static void TrError(string source, string key, Exception ex, params object[] args) =>
+            Log(LogLevel.Error, source, $"{LocaleService.Format(key, args)}: {ex.GetType().Name} - {ex.Message}");
+
         private static void Log(LogLevel level, string source, string message)
         {
             var entry = new LogEntry
