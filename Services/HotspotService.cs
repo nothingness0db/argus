@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using HotspotManager.Models;
 
@@ -58,8 +59,28 @@ namespace HotspotManager.Services
             }
             Logger.Info("Hotspot", "请求开启热点");
             var result = await _native.StartTetheringAsync();
-            if (result) IsRunning = true;
-            return result;
+            if (result) { IsRunning = true; return true; }
+
+            var currentCfg = _native.GetCurrentConfig();
+            if (currentCfg.Band != 0)
+            {
+                Logger.Warn("Hotspot", $"开启失败 (Status={_native.LastStartStatus}), 当前频段={currentCfg.Band}, 自动回退到 Auto(0) 重试");
+                var reconfigured = await _native.ConfigureAsync(currentCfg.Ssid, currentCfg.Passphrase, 0, currentCfg.IsHidden);
+                if (reconfigured)
+                {
+                    var retry = await _native.StartTetheringAsync();
+                    if (retry)
+                    {
+                        Logger.Info("Hotspot", "回退到 Auto 频段后开启成功");
+                        _config.Band = 0;
+                        IsRunning = true;
+                        return true;
+                    }
+                    Logger.Error("Hotspot", $"回退后仍失败 (Status={_native.LastStartStatus}) — 适配器可能不支持 AP 模式或被占用");
+                }
+                else Logger.Error("Hotspot", "回退配置写入失败");
+            }
+            return false;
         }
 
         public async Task<bool> StopAsync()
@@ -102,6 +123,61 @@ namespace HotspotManager.Services
 
             if (result) _config = config;
             return result;
+        }
+
+        public async Task<bool> ResetSystemHotspotAsync()
+        {
+            Logger.Info("Hotspot", "=== 开始重置系统热点 ===");
+            try
+            {
+                if (IsRunning) await StopAsync();
+
+                await Task.Run(() =>
+                {
+                    RunCmd("netsh", "wlan stop hostednetwork");
+                    RunCmd("net", "stop icssvc");
+                    RunCmd("net", "stop SharedAccess");
+                    System.Threading.Thread.Sleep(1500);
+                    RunCmd("net", "start SharedAccess");
+                    RunCmd("net", "start icssvc");
+                    System.Threading.Thread.Sleep(500);
+                });
+
+                _native.Dispose();
+                IsInitialized = await _native.InitializeAsync();
+                if (IsInitialized)
+                {
+                    IsRunning = _native.CurrentState ==
+                        Windows.Networking.NetworkOperators.TetheringOperationalState.On;
+                }
+                Logger.Info("Hotspot", $"=== 重置完成, 初始化={(IsInitialized ? "成功" : "失败")} ===");
+                return IsInitialized;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Hotspot", "重置系统热点失败", ex);
+                return false;
+            }
+        }
+
+        private static void RunCmd(string file, string args)
+        {
+            var psi = new ProcessStartInfo(file, args)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            try
+            {
+                using var p = Process.Start(psi);
+                if (p == null) { Logger.Warn("Hotspot", $"$ {file} {args} → 进程启动失败"); return; }
+                p.WaitForExit(8000);
+                var output = (p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd()).Trim();
+                Logger.Info("Hotspot", $"$ {file} {args} → exit={p.ExitCode} {(output.Length > 0 ? "| " + output : "")}");
+            }
+            catch (Exception ex) { Logger.Warn("Hotspot", $"$ {file} {args} 失败", ex); }
         }
 
         public IReadOnlyList<ConnectedDevice> GetConnectedClients()

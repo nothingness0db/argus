@@ -23,5 +23,8 @@ dotnet build -c Release
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nBuild OK. Launching..."
-    Start-Process "bin\Release\net10.0-windows10.0.19041.0\HotspotManager.exe"
+    $exe = Get-ChildItem -Path "bin" -Recurse -Filter "HotspotManager.exe" |
+        Where-Object { $_.FullName -match "Release" } |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($exe) { Start-Process $exe.FullName } else { Write-Host "No exe found" }
 }

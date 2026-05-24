@@ -49,6 +49,7 @@ namespace HotspotManager.ViewModels
             ToggleFilterCommand = new RelayCommand(_ => ToggleFilter());
             BlacklistDeviceCommand = new RelayCommand(async _ => await BlacklistDevice(), _ => SelectedDevice != null);
             SetSpeedLimitCommand = new RelayCommand(async _ => await SetSpeedLimit());
+            ResetSystemHotspotCommand = new RelayCommand(async _ => await ResetSystemHotspot());
             ToggleLogCommand = new RelayCommand(_ => IsLogVisible = !IsLogVisible);
             ClearLogCommand = new RelayCommand(_ => Logger.Clear());
             ToggleLangCommand = new RelayCommand(_ => ToggleLanguage());
@@ -105,7 +106,7 @@ namespace HotspotManager.ViewModels
         }
 
         public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
-        public bool IsHotspotOn { get => _isHotspotOn; set { _isHotspotOn = value; OnPropertyChanged(nameof(ToggleButtonText)); CommandManager.InvalidateRequerySuggested(); } }
+        public bool IsHotspotOn { get => _isHotspotOn; set { _isHotspotOn = value; OnPropertyChanged(); OnPropertyChanged(nameof(ToggleButtonText)); CommandManager.InvalidateRequerySuggested(); } }
         public bool IsSleepGuardOn { get => _isSleepGuardOn; set { _isSleepGuardOn = value; OnPropertyChanged(); RefreshBadges(); } }
         public bool IsFilterActive { get => _isFilterActive; set { _isFilterActive = value; OnPropertyChanged(); RefreshBadges(); } }
         public string Ssid { get => _ssid; set { _ssid = value; OnPropertyChanged(); } }
@@ -113,7 +114,7 @@ namespace HotspotManager.ViewModels
         public int SelectedBandIndex { get => _selectedBandIndex; set { _selectedBandIndex = value; OnPropertyChanged(); } }
         public bool IsHidden { get => _isHidden; set { _isHidden = value; OnPropertyChanged(); } }
         public ConnectedDevice SelectedDevice { get => _selectedDevice; set { _selectedDevice = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
-        public bool IsLogVisible { get => _isLogVisible; set { _isLogVisible = value; OnPropertyChanged(nameof(LogButtonText)); } }
+        public bool IsLogVisible { get => _isLogVisible; set { _isLogVisible = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogButtonText)); } }
 
         public ObservableCollection<ConnectedDevice> Devices => _deviceMonitor.Devices;
         public ObservableCollection<LogEntry> LogEntries => Logger.Entries;
@@ -139,6 +140,7 @@ namespace HotspotManager.ViewModels
         public ICommand ToggleFilterCommand { get; }
         public ICommand BlacklistDeviceCommand { get; }
         public ICommand SetSpeedLimitCommand { get; }
+        public ICommand ResetSystemHotspotCommand { get; }
         public ICommand ToggleLogCommand { get; }
         public ICommand ClearLogCommand { get; }
         public ICommand ToggleLangCommand { get; }
@@ -186,6 +188,14 @@ namespace HotspotManager.ViewModels
         }
 
         private async Task ToggleHotspot() { if (IsHotspotOn) await StopHotspot(); else await StartHotspot(); }
+
+        private async Task ResetSystemHotspot()
+        {
+            Logger.Info("UI", "Reset system hotspot requested");
+            StatusText = "正在重置系统热点配置...";
+            var r = await _hotspotService.ResetSystemHotspotAsync();
+            StatusText = r ? "系统热点已重置, 可以重试开启" : "重置失败, 请查看日志";
+        }
 
         private async Task ApplyConfig()
         {

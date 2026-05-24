@@ -18,6 +18,8 @@ namespace HotspotManager.Native
         public TetheringOperationalState CurrentState =>
             _manager?.TetheringOperationalState ?? TetheringOperationalState.Off;
 
+        public TetheringOperationStatus LastStartStatus { get; private set; }
+
         public async Task<bool> InitializeAsync()
         {
             try
@@ -77,9 +79,11 @@ namespace HotspotManager.Native
                 }
 
                 Logger.Info("Hotspot", "正在开启热点...");
-                await _manager.StartTetheringAsync();
+                var opResult = await _manager.StartTetheringAsync();
+                LastStartStatus = opResult.Status;
+                Logger.Info("Hotspot", $"StartTetheringAsync 返回: Status={opResult.Status}, AdditionalErrorMessage={opResult.AdditionalErrorMessage ?? "(none)"}");
                 var success = _manager.TetheringOperationalState == TetheringOperationalState.On;
-                Logger.Info("Hotspot", success ? "热点已成功开启" : "热点开启后状态异常");
+                Logger.Info("Hotspot", success ? "热点已成功开启" : $"热点开启后状态异常: 当前状态={_manager.TetheringOperationalState}");
                 return success;
             }
             catch (Exception ex)
@@ -105,9 +109,10 @@ namespace HotspotManager.Native
                 }
 
                 Logger.Info("Hotspot", "正在关闭热点...");
-                await _manager.StopTetheringAsync();
+                var opResult = await _manager.StopTetheringAsync();
+                Logger.Info("Hotspot", $"StopTetheringAsync 返回: Status={opResult.Status}, AdditionalErrorMessage={opResult.AdditionalErrorMessage ?? "(none)"}");
                 var success = _manager.TetheringOperationalState == TetheringOperationalState.Off;
-                Logger.Info("Hotspot", success ? "热点已成功关闭" : "热点关闭后状态异常");
+                Logger.Info("Hotspot", success ? "热点已成功关闭" : $"热点关闭后状态异常: 当前状态={_manager.TetheringOperationalState}");
                 return success;
             }
             catch (Exception ex)
@@ -151,6 +156,18 @@ namespace HotspotManager.Native
 
                 await _manager.ConfigureAccessPointAsync(config);
                 Logger.Info("Hotspot", "热点配置已应用");
+
+                try
+                {
+                    var verify = _manager.GetCurrentAccessPointConfiguration();
+                    var verifyBandProp = verify.GetType().GetProperty("Band");
+                    var actualBand = verifyBandProp != null ? verifyBandProp.GetValue(verify) : null;
+                    Logger.Info("Hotspot", $"读回配置: SSID={verify.Ssid}, Band={actualBand ?? "N/A"} (请求={band})");
+                    if (actualBand != null && (int)actualBand != band)
+                        Logger.Warn("Hotspot", $"频段被系统调整: 请求={band}, 实际={actualBand} (适配器可能不支持该频段)");
+                }
+                catch (Exception ex) { Logger.Warn("Hotspot", "读回配置失败", ex); }
+
                 return true;
             }
             catch (Exception ex)

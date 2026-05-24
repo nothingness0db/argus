@@ -11,6 +11,17 @@ per-device blocking and bandwidth limiting via [WinDivert](https://www.reqrypt.o
 
 - **Hotspot control** — start / stop the Windows Mobile Hotspot, change SSID,
   password, band (Auto / 2.4 GHz / 5 GHz), hide the network.
+- **Reset system hotspot** — one-click recovery when Windows' Mobile Hotspot
+  gets stuck in a bad state (e.g. selecting 5 GHz on an adapter that doesn't
+  support 5 GHz AP mode leaves the API permanently returning `WiFiDeviceOff`).
+  The button runs `netsh wlan stop hostednetwork`, restarts the `icssvc` and
+  `SharedAccess` services, and re-initialises the TetheringManager — this clears
+  the dirty state cache so the next start attempt re-detects adapter capabilities.
+  Side effects: any other ICS share is interrupted for 1–2 s, currently-connected
+  hotspot clients are kicked, and admin rights are required.
+- **Automatic band fallback** — if Start fails while a specific band is selected,
+  the app automatically reconfigures to Auto and retries once, surfacing the
+  `TetheringOperationStatus` (`WiFiDeviceOff`, `OperationInProgress`, …) in the log.
 - **Connected devices** — live list of clients (hostname, MAC, IP) polled
   from the hotspot.
 - **Per-device blocking** — blacklist a client by MAC; its traffic is dropped
