@@ -59,28 +59,8 @@ namespace HotspotManager.Services
             }
             Logger.TrInfo("Hotspot", "LogMsg.Hot.StartReq");
             var result = await _native.StartTetheringAsync();
-            if (result) { IsRunning = true; return true; }
-
-            var currentCfg = _native.GetCurrentConfig();
-            if (currentCfg.Band != 0)
-            {
-                Logger.TrWarn("Hotspot", "LogMsg.Hot.Fallback", _native.LastStartStatus, currentCfg.Band);
-                var reconfigured = await _native.ConfigureAsync(currentCfg.Ssid, currentCfg.Passphrase, 0, currentCfg.IsHidden);
-                if (reconfigured)
-                {
-                    var retry = await _native.StartTetheringAsync();
-                    if (retry)
-                    {
-                        Logger.TrInfo("Hotspot", "LogMsg.Hot.FallbackOk");
-                        _config.Band = 0;
-                        IsRunning = true;
-                        return true;
-                    }
-                    Logger.TrError("Hotspot", "LogMsg.Hot.FallbackFail", _native.LastStartStatus);
-                }
-                else Logger.TrError("Hotspot", "LogMsg.Hot.FallbackCfgFail");
-            }
-            return false;
+            if (result) IsRunning = true;
+            return result;
         }
 
         public async Task<bool> StopAsync()
