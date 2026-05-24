@@ -11,13 +11,13 @@ namespace HotspotManager.Services
 
         private static readonly Dictionary<string, string> EN = new Dictionary<string, string>
         {
-            ["App.Title"] = "Hotspot Manager",
+            ["App.Title"] = "Argus",
             ["App.Init"] = "Initializing...",
             ["App.InitFail"] = "Initialization failed. Run as Administrator.",
             ["App.InitStart"] = "Starting initialization...",
             ["App.InitDone"] = "Initialization complete",
-            ["App.Started"] = "Hotspot Manager started",
-            ["App.Shutdown"] = "Hotspot Manager shutting down",
+            ["App.Started"] = "Argus started",
+            ["App.Shutdown"] = "Argus shutting down",
 
             ["Config.Section"] = "Configuration",
             ["Config.Ssid"] = "SSID",
@@ -83,13 +83,13 @@ namespace HotspotManager.Services
 
         private static readonly Dictionary<string, string> ZH = new Dictionary<string, string>
         {
-            ["App.Title"] = "热点管理器",
+            ["App.Title"] = "Argus",
             ["App.Init"] = "初始化中...",
             ["App.InitFail"] = "初始化失败，请以管理员身份运行",
             ["App.InitStart"] = "开始初始化...",
             ["App.InitDone"] = "初始化完成",
-            ["App.Started"] = "热点管理器启动",
-            ["App.Shutdown"] = "热点管理器关闭",
+            ["App.Started"] = "Argus 已启动",
+            ["App.Shutdown"] = "Argus 正在关闭",
 
             ["Config.Section"] = "配置",
             ["Config.Ssid"] = "网络名称",

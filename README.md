@@ -1,4 +1,6 @@
-# Hotspot Manager
+# Argus
+
+> The hundred-eyed watcher for your Windows hotspot.
 
 A minimal WPF utility for managing the built-in Windows Mobile Hotspot, plus
 per-device blocking and bandwidth limiting via [WinDivert](https://www.reqrypt.org/windivert.html).
