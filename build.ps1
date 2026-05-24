@@ -1,5 +1,6 @@
 param(
-    [string]$Icon = ""
+    [string]$Icon = "",
+    [switch]$Run
 )
 
 $env:DOTNET_ROOT = "E:\scoop\apps\dotnet-sdk\current"
@@ -16,15 +17,19 @@ print('Icon saved')
 "@
 }
 
-taskkill /F /IM HotspotManager.exe 2>$null
-Start-Sleep -Seconds 1
+if ($Run) {
+    taskkill /F /IM HotspotManager.exe 2>$null
+    Start-Sleep -Seconds 1
+}
 
 dotnet build -c Release
 
-if ($LASTEXITCODE -eq 0) {
+if ($LASTEXITCODE -eq 0 -and $Run) {
     Write-Host "`nBuild OK. Launching..."
     $exe = Get-ChildItem -Path "bin" -Recurse -Filter "HotspotManager.exe" |
         Where-Object { $_.FullName -match "Release" } |
         Sort-Object LastWriteTime -Descending | Select-Object -First 1
     if ($exe) { Start-Process $exe.FullName } else { Write-Host "No exe found" }
+} elseif ($LASTEXITCODE -eq 0) {
+    Write-Host "`nBuild OK. Pass -Run to launch."
 }
