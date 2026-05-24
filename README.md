@@ -1,51 +1,36 @@
 # Argus
 
-> The hundred-eyed watcher for your Windows hotspot.
+Windows' built-in Mobile Hotspot is flaky. It corrupts its own state and refuses to come back up — especially if you touch the 5 GHz toggle on an adapter that doesn't actually support 5 GHz AP mode. Once that happens, the API just locks up and returns `WiFiDeviceOff` forever no matter what you click. I wrote this app mostly because I was tired of rebooting to fix it.
 
 [![Release](https://img.shields.io/github/v/release/nothingness0db/argus)](https://github.com/nothingness0db/argus/releases/latest)
 
-A minimal WPF utility for managing the built-in Windows Mobile Hotspot, plus
-per-device blocking and bandwidth limiting via [WinDivert](https://www.reqrypt.org/windivert.html).
+[中文](README_zh.md) / English. Built on .NET 10 + WPF. Wraps the Windows hotspot API and adds per-device blocking and bandwidth limiting via [WinDivert](https://www.reqrypt.org/windivert.html).
 
-[中文](README_zh.md) / English bilingual UI. Built on .NET 10 + WPF.
+## What it does
 
-## Features
-
-- **Hotspot control** — start / stop the Windows Mobile Hotspot, change SSID,
-  password, band (Auto / 2.4 GHz / 5 GHz), hide the network.
-- **Reset system hotspot** — one-click recovery when Windows' Mobile Hotspot
-  gets stuck in a bad state (e.g. selecting 5 GHz on an adapter that doesn't
-  support 5 GHz AP mode leaves the API permanently returning `WiFiDeviceOff`).
-  The button runs `netsh wlan stop hostednetwork`, restarts the `icssvc` and
-  `SharedAccess` services, and re-initialises the TetheringManager — this clears
-  the dirty state cache so the next start attempt re-detects adapter capabilities.
-  Side effects: any other ICS share is interrupted for 1–2 s, currently-connected
-  hotspot clients are kicked, and admin rights are required.
-- **Automatic band fallback** — if Start fails while a specific band is selected,
-  the app automatically reconfigures to Auto and retries once, surfacing the
-  `TetheringOperationStatus` (`WiFiDeviceOff`, `OperationInProgress`, …) in the log.
-- **Connected devices** — live list of clients (hostname, MAC, IP) polled
-  from the hotspot.
-- **Per-device blocking** — blacklist a client by MAC; its traffic is dropped
-  at the network layer via WinDivert.
-- **Per-device speed limit** — token-bucket throttling in Kbps per client.
-- **Sleep guard** — prevent the host from sleeping while the hotspot is on.
-- **Bilingual UI** — toggle between English and 中文 at runtime.
-- **Activity log** — collapsible in-app log panel; also written to `logs/`.
+- The usual hotspot controls: start/stop, change SSID, password, band (Auto / 2.4 GHz / 5 GHz), hide the network.
+- **Reset System Hotspot** — the main reason this app exists. When Windows wedges its own hotspot state (the 5 GHz case above is the most common one — the API stays stuck on `WiFiDeviceOff` until you reboot), this button runs `netsh wlan stop hostednetwork`, restarts the `icssvc` and `SharedAccess` services, and re-initialises the TetheringManager. That clears the dirty state cache so the next start attempt actually re-detects adapter capabilities. Usually fixes it. Caveats: any other ICS share you have running gets interrupted for a second or two, currently-connected clients are kicked, admin rights required.
+- Automatic band fallback — if Start fails on a specific band, the app reconfigures to Auto and retries once. The actual `TetheringOperationStatus` (`WiFiDeviceOff`, `OperationInProgress`, ...) shows up in the log so you can see what happened.
+- Live list of connected clients (hostname, MAC, IP).
+- Per-device blacklist by MAC — traffic is dropped at the network layer via WinDivert.
+- Per-device speed limit, Kbps, token bucket.
+- Sleep guard — keep the host awake while the hotspot is on.
+- EN / 中文 toggle at runtime.
+- Collapsible log panel; also written to `logs/`.
 
 ## Requirements
 
-- Windows 10 19041 or newer (Windows 11 supported)
+- Windows 10 19041 or newer (Windows 11 fine)
 - .NET 10 SDK to build, .NET 10 desktop runtime to run
 - A Wi-Fi adapter that supports the Mobile Hotspot feature
-- **Administrator privileges** — the app manifest requests elevation; required
-  by the hotspot API and WinDivert
-- For traffic filtering / speed limit / blacklist:
-  - `WinDivert.dll` and `WinDivert64.sys` placed in `Assets/`
-  - Download from <https://reqrypt.org/windivert.html>
+- **Administrator privileges** — the app manifest requests elevation; hotspot API and WinDivert both need it
 
-WinDivert binaries are **not** included in this repo (licensing / distribution).
-The app still runs without them — only the filter features are disabled.
+For the filter / speed-limit / blacklist features:
+
+- Drop `WinDivert.dll` and `WinDivert64.sys` into `Assets/`
+- Get them from <https://reqrypt.org/windivert.html> — I can't redistribute them here, licensing
+
+The app runs fine without them, you just lose the filter features.
 
 ## Build & Run
 
@@ -60,22 +45,21 @@ The script:
 2. `dotnet build -c Release`
 3. Launches the freshly built exe from `bin/x64/Release/...`
 
-Run as Administrator (the manifest will trigger UAC).
+Run elevated (the manifest will trigger UAC).
 
-To regenerate the app icon from a PNG:
+To regenerate the app icon from a PNG, drop your source at `Assets/logo-src.png` and run:
 
 ```powershell
-# place your source PNG at Assets/logo-src.png, then:
 ./build-icon.ps1
 ```
 
-This writes a multi-size `Assets/app.ico` (16 / 24 / 32 / 48 / 64 / 128 / 256).
+You get a multi-size `Assets/app.ico` (16 / 24 / 32 / 48 / 64 / 128 / 256).
 
 ## Project layout
 
 ```
 Models/         HotspotConfig, ConnectedDevice
-Services/      HotspotService, DeviceMonitorService, TrafficFilterService,
+Services/       HotspotService, DeviceMonitorService, TrafficFilterService,
                 SleepGuardService, LocaleService, Logger
 ViewModels/     MainViewModel (commands, observable state)
 Themes/         WPF resource dictionaries (MinimalTheme)
@@ -85,12 +69,10 @@ Assets/         app.ico (+ logo source, WinDivert binaries when present)
 
 ## Localisation
 
-Strings live in `Services/LocaleService.cs` as two dictionaries (`EN`, `ZH`).
-Add a key to both, bind in XAML with `{Binding L[Your.Key]}`.
+Strings live in `Services/LocaleService.cs` as two dictionaries (`EN`, `ZH`). Add a key to both, bind in XAML via `{Binding L[Your.Key]}`.
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-WinDivert is licensed separately (LGPL / GPL / commercial); see its project
-page for terms.
+WinDivert is licensed separately (LGPL / GPL / commercial); see their project page for terms.
