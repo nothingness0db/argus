@@ -176,7 +176,21 @@ namespace HotspotManager.ViewModels
             Logger.TrInfo("UI", "LogMsg.UI.StartReq");
             StatusText = LocaleService.Get("Status.Starting");
             var r = await _hotspotService.StartAsync();
-            StatusText = r ? LocaleService.Get("Status.Started") : LocaleService.Get("Status.StartFail");
+            if (r) { StatusText = LocaleService.Get("Status.Started"); return; }
+
+            var status = _hotspotService.LastStartStatus;
+            var cfgBand = _hotspotService.Config.Band;
+            if (status == Windows.Networking.NetworkOperators.TetheringOperationStatus.WiFiDeviceOff
+                && cfgBand == 2
+                && WifiDiagnostics.IsLikelyClientOn2_4G(out var mbps))
+            {
+                StatusText = LocaleService.Format("Status.StartFail.5GOn2_4G", mbps);
+                Logger.TrWarn("UI", "Status.StartFail.5GOn2_4G", mbps);
+            }
+            else
+            {
+                StatusText = LocaleService.Format("Status.StartFail.WithStatus", status);
+            }
         }
 
         private async Task StopHotspot()
@@ -200,6 +214,10 @@ namespace HotspotManager.ViewModels
         private async Task ApplyConfig()
         {
             if (Passphrase.Length < 8) { StatusText = LocaleService.Get("Config.PwTooShort"); return; }
+            if (SelectedBandIndex == 2 && WifiDiagnostics.IsLikelyClientOn2_4G(out var mbps))
+            {
+                Logger.TrWarn("UI", "Config.Warning.5GOn2_4G", mbps);
+            }
             StatusText = LocaleService.Get("Config.Applying");
             var cfg = new HotspotConfig { Ssid = Ssid, Passphrase = Passphrase, Band = SelectedBandIndex, IsHidden = IsHidden };
             var r = await _hotspotService.ApplyConfigAsync(cfg);

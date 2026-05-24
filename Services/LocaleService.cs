@@ -101,6 +101,9 @@ namespace HotspotManager.Services
             ["Status.Resetting"] = "Resetting system hotspot...",
             ["Status.ResetOk"] = "System hotspot reset, you can retry Start",
             ["Status.ResetFail"] = "Reset failed, see log",
+            ["Status.StartFail.5GOn2_4G"] = "Start failed: 5GHz AP unavailable while WLAN is on 2.4GHz ({0} Mbps). Single-radio cards require STA and AP on the same band -- connect WLAN to a 5GHz network first.",
+            ["Status.StartFail.WithStatus"] = "Failed to start hotspot ({0})",
+            ["Config.Warning.5GOn2_4G"] = "Warning: WLAN currently on 2.4GHz ({0} Mbps). 5GHz hotspot will almost certainly fail on a single-radio card.",
 
             ["Btn.ResetSys"] = "Reset System Hotspot",
             ["Btn.ResetSysTip"] = "Clears Windows hotspot stuck state: stops hostednetwork, restarts ICS, re-initialises",
@@ -243,6 +246,9 @@ namespace HotspotManager.Services
             ["Status.Resetting"] = "正在重置系统热点...",
             ["Status.ResetOk"] = "系统热点已重置, 可以重试开启",
             ["Status.ResetFail"] = "重置失败, 请查看日志",
+            ["Status.StartFail.5GOn2_4G"] = "开启失败: WLAN 客户端当前在 2.4GHz ({0} Mbps), 单射频卡的 STA 和 AP 必须同频段 -- 先让 WLAN 连一个 5GHz 网络再开 5G 热点",
+            ["Status.StartFail.WithStatus"] = "热点开启失败 ({0})",
+            ["Config.Warning.5GOn2_4G"] = "警告: WLAN 当前在 2.4GHz ({0} Mbps), 单射频卡上 5G 热点几乎必然失败",
 
             ["Btn.ResetSys"] = "重置系统热点",
             ["Btn.ResetSysTip"] = "清除 Windows 当前热点状态: 停止 hostednetwork, 重启 ICS 服务, 重新初始化",

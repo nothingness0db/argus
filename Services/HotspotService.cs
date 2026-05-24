@@ -26,6 +26,8 @@ namespace HotspotManager.Services
 
         public bool IsInitialized { get; private set; }
 
+        public Windows.Networking.NetworkOperators.TetheringOperationStatus LastStartStatus => _native.LastStartStatus;
+
         public event EventHandler StatusChanged;
 
         public HotspotConfig ReadSystemConfig()
