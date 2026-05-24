@@ -2,10 +2,12 @@
 
 > The hundred-eyed watcher for your Windows hotspot.
 
+[![Release](https://img.shields.io/github/v/release/nothingness0db/argus)](https://github.com/nothingness0db/argus/releases/latest)
+
 A minimal WPF utility for managing the built-in Windows Mobile Hotspot, plus
 per-device blocking and bandwidth limiting via [WinDivert](https://www.reqrypt.org/windivert.html).
 
-中文 / English bilingual UI. Built on .NET 10 + WPF.
+[中文](README_zh.md) / English bilingual UI. Built on .NET 10 + WPF.
 
 ## Features
 
