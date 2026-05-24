@@ -1,13 +1,42 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace HotspotManager.Services
 {
     public static class LocaleService
     {
-        private static string _current = "EN";
+        private static string _current = LoadSaved();
+
+        private static string SettingsPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Argus", "locale.txt");
+
+        private static string LoadSaved()
+        {
+            try
+            {
+                if (File.Exists(SettingsPath))
+                {
+                    var v = File.ReadAllText(SettingsPath).Trim();
+                    if (v == "EN" || v == "ZH") return v;
+                }
+            }
+            catch { }
+            return "EN";
+        }
+
+        private static void SaveCurrent()
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+                File.WriteAllText(SettingsPath, _current);
+            }
+            catch { }
+        }
 
         private static readonly Dictionary<string, string> EN = new Dictionary<string, string>
         {
@@ -166,6 +195,7 @@ namespace HotspotManager.Services
         public static void Toggle()
         {
             _current = _current == "EN" ? "ZH" : "EN";
+            SaveCurrent();
             StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs("Item[]"));
             StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs("LangButton"));
         }
